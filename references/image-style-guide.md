@@ -2,6 +2,8 @@
 
 This guide defines the full-slide PNG style used for content pages.
 
+For an explicitly selected 港华风格 preset, read [towngas-style.md](towngas-style.md). Its scoped palette, language, background, and layout rules override the corresponding generic defaults here; all source-fidelity and editable-output requirements remain in force.
+
 ## Contents
 
 - [Visual Direction](#visual-direction)

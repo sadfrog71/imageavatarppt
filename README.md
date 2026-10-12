@@ -116,3 +116,14 @@ Each chapter repeats steps 3-4.
 - OpenAI and MiniMax generate images; Kimi reviews generated images.
 - Do not generate multiple visual template options unless the user explicitly asks for alternatives.
 - The user-provided source template is copied into `assets/` so the project is self-contained.
+
+
+## 港华风格模板（可选）
+
+使用方式：“用 imageavatarppt 的港华风格模板制作这份汇报，Logo 保留占位。”
+
+见 [设计规范](references/towngas-style.md)：浅冰蓝底、深蓝标题、强调蓝大数字，
+结论先行，每页一个重点；圆角白卡片、粗蓝流程箭头、八种统一版式。
+默认简体中文，右上角保留可编辑 Logo 占位，不附带品牌图片、链接或企业字样。
+这是视觉预设，保留现有可编辑 PPT 和质量检查流程，不改变其他风格的默认值。
+现有脚本采用浅冰蓝纯色底；极淡渐变仅在支持它的原生排版路径使用。

@@ -1,11 +1,28 @@
 ---
 name: imageavatarppt
-description: Generate thesis-led, chapter-based executive PowerPoint decks from Chinese or English outlines using the bundled Parallel Digital template, source-aware editorial layouts, native editable titles and body copy, an 18pt hard font floor with regular copy at 20pt or larger, non-text raster/image expression capped at 30%, explicit page-to-page transitions, static anti-template and assembled-PPTX audits, and optional multimodal visual QA. Use when Codex must turn loose material into a management, executive, proposal, strategy, steering-committee, or major-project deck; identify the central judgment and decision request; reduce formulaic AI copy and generic AI visual devices; use OpenAI GPT Image or MiniMax as restrained visual support; review images and deck rhythm with Kimi Vision; recolor the template; and assemble a final editable PPTX.
+description: Generate thesis-led, chapter-based executive PowerPoint decks from Chinese or English outlines using the bundled Parallel Digital template, source-aware editorial layouts, native editable titles and body copy, an 18pt hard font floor with regular copy at 20pt or larger, non-text raster/image expression capped at 30%, explicit page-to-page transitions, static anti-template and assembled-PPTX audits, and optional multimodal visual QA. Use when Codex must turn loose material into a management, executive, proposal, strategy, steering-committee, or major-project deck; identify the central judgment and decision request; reduce formulaic AI copy and generic AI visual devices; use OpenAI GPT Image or MiniMax as restrained visual support; review images and deck rhythm with Kimi Vision; recolor the template; and assemble a final editable PPTX. Includes an optional 港华风格 (Towngas-style) ice-blue executive visual preset with a neutral Logo placeholder.
 ---
 
 # Image Avatar PPT
 
 Build a PPTX from an outline through a controlled plan, image generation, visual QA, and deterministic assembly.
+
+## Optional Visual Presets
+
+When the user requests “港华风格”, “港华风”, or the Towngas-style template,
+read [references/towngas-style.md](references/towngas-style.md) before planning.
+This is a reusable visual preset with a neutral Logo placeholder, not a brand
+asset pack or a separate generation workflow. Do not activate it merely because
+the source mentions the company.
+
+For this preset, its Simplified Chinese default, ice-blue palette, optional
+subtle gradient, eight layout families, and page furniture take precedence over
+the generic white-background, Traditional Chinese, and anti-card defaults below
+and in `image-style-guide.md`. Explicit user choices still take precedence.
+Retain editable text, font floors, source fidelity, provider authorization,
+image-area limits, and existing assembly/QA contracts. The preset does not imply
+permission to use bitmap text or paid generation. Follow its compatibility notes
+when building a plan; selecting a preset does not configure scripts automatically.
 
 ## Provider Roles
 
