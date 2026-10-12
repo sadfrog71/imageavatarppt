@@ -24,6 +24,8 @@ from validate_plan import validate_plan
 
 def content_slide_indices(plan: dict[str, Any]) -> list[int]:
     """Return zero-based assembled slide indices for plan content slides."""
+    if plan.get("workflow", {}).get("contract") == "imagegen_full_deck_v1":
+        return list(range(sum(len(section["slides"]) for section in plan["sections"])))
     index = int(bool(plan.get("include_cover", True)))
     index += int(bool(plan.get("include_catalogue", True)))
     indices: list[int] = []
@@ -72,6 +74,12 @@ def audit_pptx(
     planned_slides = [slide for _, _, slide in iter_slides(plan)]
     indices = content_slide_indices(plan)
     errors: list[str] = []
+    if plan.get("workflow", {}).get("contract") == "imagegen_full_deck_v1":
+        if len(prs.slides) != len(planned_slides):
+            errors.append("full-image deck page count must exactly match the plan")
+        for page in prs.slides:
+            if len(page.shapes) != 1 or page.shapes[0].shape_type != MSO_SHAPE_TYPE.PICTURE:
+                errors.append("full-image pages must contain only one image and no native overlays")
     findings: list[dict[str, Any]] = []
     minimum_seen: float | None = None
     editable_shape_count = 0
@@ -173,7 +181,8 @@ def audit_pptx(
 
     expected_slide_count = len(indices) + int(bool(plan.get("include_cover", True)))
     expected_slide_count += int(bool(plan.get("include_catalogue", True)))
-    expected_slide_count += len(plan.get("sections", []))
+    if plan.get("workflow", {}).get("contract") != "imagegen_full_deck_v1":
+        expected_slide_count += len(plan.get("sections", []))
     expected_slide_count += int(bool(plan.get("include_closing", True)))
     if len(prs.slides) != expected_slide_count:
         errors.append(

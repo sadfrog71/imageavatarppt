@@ -83,6 +83,7 @@ ALLOWED_LAYOUTS = {
 
 def validate_plan(plan: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    full_image = plan.get("workflow", {}).get("contract") == "imagegen_full_deck_v1"
 
     if not plan.get("output"):
         errors.append("top-level 'output' is required")
@@ -296,7 +297,7 @@ def validate_plan(plan: dict[str, Any]) -> list[str]:
         composition_mode = generation.get("composition_mode", "overlay_panels")
         if composition_mode not in ALLOWED_COMPOSITION_MODES:
             errors.append("image_generation.composition_mode is not supported")
-        if generation.get("background_mode", "solid") != "solid":
+        if generation.get("background_mode", "solid") not in (("solid", "soft_gradient") if full_image else ("solid",)):
             errors.append("image_generation.background_mode must be 'solid'")
         configured_graphic_ratio = generation.get(
             "max_accent_graphic_area_ratio",
@@ -320,11 +321,11 @@ def validate_plan(plan: dict[str, Any]) -> list[str]:
         if (
             isinstance(configured_image_ratio, bool)
             or not isinstance(configured_image_ratio, (int, float))
-            or not 0 < configured_image_ratio <= 0.30
+            or not 0 < configured_image_ratio <= (1.0 if full_image else 0.30)
         ):
             errors.append(
                 "image_generation.max_image_area_ratio must be a number "
-                "greater than 0 and no greater than 0.30"
+                f"greater than 0 and no greater than {1.0 if full_image else 0.30}"
             )
         else:
             max_image_area_ratio = float(configured_image_ratio)
@@ -744,6 +745,39 @@ def validate_plan(plan: dict[str, Any]) -> list[str]:
             errors.append(f"{prefix}.image duplicates '{image}'")
         else:
             seen_images.add(image)
+
+    if full_image:
+        workflow = plan["workflow"]
+        style = workflow.get("style", {})
+        preview = workflow.get("preview", {})
+        pages = [slide for _, _, slide in iter_slides(plan)]
+        if not isinstance(style, dict) or style.get("confirmed") is not True or not str(style.get("name", "")).strip() or not str(style.get("selection_evidence", "")).strip():
+            errors.append("workflow.style requires a user-selected name, confirmed=true and selection_evidence")
+        expected = [slide.get("id") for slide in pages[:3]]
+        if not isinstance(preview, dict) or preview.get("slide_ids") != expected:
+            errors.append("workflow.preview.slide_ids must be the first min(3, total) pages")
+        if isinstance(preview, dict):
+            if preview.get("status") not in {"pending", "approved"}:
+                errors.append("workflow.preview.status must be pending or approved")
+            if preview.get("status") == "approved" and not str(preview.get("approval_evidence", "")).strip():
+                errors.append("approved preview requires real user approval_evidence")
+        generation = plan.get("image_generation", {})
+        if generation.get("composition_mode") != "direct_imagegen_slide" or generation.get("local_text_overlay") is not False:
+            errors.append("full ImageGen workflow requires direct_imagegen_slide and local_text_overlay=false")
+        if plan.get("typography", {}).get("prefer_editable_text") is not False:
+            errors.append("full ImageGen workflow requires prefer_editable_text=false")
+        if generation.get("provider") != "openai":
+            errors.append("full ImageGen workflow requires built-in ImageGen, not a substitute provider")
+        for flag in ("include_cover", "include_catalogue", "include_closing"):
+            if plan.get(flag) is not False:
+                errors.append(f"{flag} must be false; all pages belong in sections[].slides")
+        for page in pages:
+            if page.get("title_render_mode") != "image" or page.get("editable_text"):
+                errors.append(f"{page.get('id')}: all visible text must be image-rendered, with no editable_text")
+            if page.get("image_area_ratio") != 1.0:
+                errors.append(f"{page.get('id')}: image_area_ratio must be 1.0 for the full-page image")
+            if page.get("title") not in page.get("exact_text", []):
+                errors.append(f"{page.get('id')}: image-rendered title must be in exact_text")
 
     return errors
 

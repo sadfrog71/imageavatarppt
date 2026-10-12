@@ -491,12 +491,50 @@ def require_qa_pass(plan: dict[str, Any], base_dir: Path) -> None:
         raise ValueError(f"vision QA slide set does not match deck plan: {report_path}")
 
 
-def build_deck(plan_path: Path) -> tuple[Path, Path]:
+def build_imagegen_deck(plan: dict[str, Any], base_dir: Path, preview: bool) -> tuple[Path, Path]:
+    """Package complete ImageGen pages without adding native template elements."""
+    approval = plan["workflow"]["preview"]
+    pages = [slide for section in plan["sections"] for slide in section["slides"]]
+    if preview:
+        pages = pages[:3]
+    elif approval["status"] != "approved":
+        raise ValueError("Full deck blocked: user must approve the preview pages first")
+    else:
+        require_qa_pass(plan, base_dir)
+    output_path = resolve_path(plan["output"], base_dir)
+    assert output_path is not None
+    if preview:
+        output_path = output_path.with_name(output_path.stem + "-preview.pptx")
+    prs = Presentation()
+    prs.slide_width, prs.slide_height = Inches(13.333333), Inches(7.5)
+    inventory = []
+    for page in pages:
+        image_path = resolve_path(page["image"], base_dir)
+        assert image_path is not None
+        width, height = validate_image_geometry(image_path, configured_minimum_size(plan))
+        add_full_bleed_image_slide(prs, image_path)
+        inventory.append({"id": page["id"], "title": page["title"], "image": str(image_path),
+                          "type": "content-image", "title_render_mode": "image",
+                          "sha256": hashlib.sha256(image_path.read_bytes()).hexdigest(),
+                          "dimensions": {"width": width, "height": height}, "editable_text_count": 0})
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    prs.save(str(output_path))
+    inventory_path = output_path.with_suffix(".inventory.json")
+    inventory_path.write_text(json.dumps({"deck": str(output_path), "preview": preview,
+        "slide_count": len(inventory), "slides": inventory}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return output_path, inventory_path
+
+
+def build_deck(plan_path: Path, preview: bool = False) -> tuple[Path, Path]:
     plan = load_plan(plan_path)
     errors = validate_plan(plan)
     if errors:
         raise ValueError("\n".join(errors))
     base_dir = plan_path.parent
+    if plan.get("workflow", {}).get("contract") == "imagegen_full_deck_v1":
+        return build_imagegen_deck(plan, base_dir, preview)
+    if preview:
+        raise ValueError("--preview requires the imagegen_full_deck_v1 workflow")
     require_qa_pass(plan, base_dir)
 
     template_path = resolve_path(plan.get("template"), base_dir) or DEFAULT_TEMPLATE
@@ -643,8 +681,9 @@ def build_deck(plan_path: Path) -> tuple[Path, Path]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("plan", help="Path to deck-plan JSON")
+    parser.add_argument("--preview", action="store_true", help="Assemble only the first three approval pages")
     args = parser.parse_args()
-    output, inventory = build_deck(Path(args.plan).resolve())
+    output, inventory = build_deck(Path(args.plan).resolve(), preview=args.preview)
     print(f"Created {output}")
     print(f"Created {inventory}")
 

@@ -1,541 +1,73 @@
 ---
 name: imageavatarppt
-description: Generate thesis-led, chapter-based executive PowerPoint decks from Chinese or English outlines using the bundled Parallel Digital template, source-aware editorial layouts, native editable titles and body copy, an 18pt hard font floor with regular copy at 20pt or larger, non-text raster/image expression capped at 30%, explicit page-to-page transitions, static anti-template and assembled-PPTX audits, and optional multimodal visual QA. Use when Codex must turn loose material into a management, executive, proposal, strategy, steering-committee, or major-project deck; identify the central judgment and decision request; reduce formulaic AI copy and generic AI visual devices; use OpenAI GPT Image or MiniMax as restrained visual support; review images and deck rhythm with Kimi Vision; recolor the template; and assemble a final editable PPTX. Includes an optional 港华风格 (Towngas-style) ice-blue executive visual preset with a neutral Logo placeholder.
+description: Create executive PPT decks with mandatory ImageGen full-page images, including all text and backgrounds. Ask the user to select a visual style, generate three preview pages, wait for explicit approval, then generate the remaining pages and assemble the complete image-based PPTX. Supports 港华风格, restrained white executive style, and user-provided custom references.
 ---
 
 # Image Avatar PPT
 
-Build a PPTX from an outline through a controlled plan, image generation, visual QA, and deterministic assembly.
+## 全局强制合同（所有风格）
 
-## Optional Visual Presets
+1. **先确定风格**：用户未明确选定时，必须询问“港华风格 / 克制白底商务 / 自定义参考风格”。可附一句推荐理由，但不能代替用户选择。用户已明确指定则记录，不重复问。不能只问颜色就视为选定风格。
+2. **整页由 ImageGen 生成**：标题、正文、数字、标签、图表、背景和页面家具一起生成。使用可用的内置 `image_gen` 工具，执行前读取 imagegen 技能。不得用代码绘图、原生文字、HTML 截图或其他模型替代整页生成。工具不可用时说明阻塞，不静默降级。
+3. **先出 3 页确认稿**：默认封面、一页看懂、第 3 页。先自行逐页看图，再展示三页及联系表，询问风格、信息层级、文字、素材和 Logo 占位是否满意。总页数少于 3 页时展示全部实际页面，不凑页。
+4. **确认后出全稿**：必须收到用户对这批确认稿的明确认可，才生成第 4 页及后续页面。用户此前说“直接全部生成”不能当作已看过确认稿；本技能仍保留该检查点。用户修改意见未处理完成时不继续。
+5. **风格锁定**：确认后固定 `creative_brief`、`design_constraints`、字体层级、配色和页面家具。复用已确认的前三页，仅生成剩余页面；需要修改时只重生成受影响页。更换风格或整套视觉规范后重新展示确认稿。
 
-When the user requests “港华风格”, “港华风”, or the Towngas-style template,
-read [references/towngas-style.md](references/towngas-style.md) before planning.
-This is a reusable visual preset with a neutral Logo placeholder, not a brand
-asset pack or a separate generation workflow. Do not activate it merely because
-the source mentions the company.
+这是全技能的新合同，取代旧版“默认可编辑正文、无字画布、文字叠加、图片面积 ≤30%、首张可选校准、原生模板封面/章节/结尾”等制作规则。旧脚本保留兼容历史计划，但新任务只能使用下述 `imagegen_full_deck_v1` 流程，不能走 legacy 路径。
 
-For this preset, its Simplified Chinese default, ice-blue palette, optional
-subtle gradient, eight layout families, and page furniture take precedence over
-the generic white-background, Traditional Chinese, and anti-card defaults below
-and in `image-style-guide.md`. Explicit user choices still take precedence.
-Retain editable text, font floors, source fidelity, provider authorization,
-image-area limits, and existing assembly/QA contracts. The preset does not imply
-permission to use bitmap text or paid generation. Follow its compatibility notes
-when building a plan; selecting a preset does not configure scripts automatically.
+## 风格入口
 
-## Provider Roles
+- **港华风格**：读取 `references/towngas-style.md`。浅冰蓝底、深蓝标题、强调蓝数字、圆角卡片和八种版式；中性 Logo 占位，不携带品牌图片或企业字样。
+- **克制白底商务**：读取 `references/image-style-guide.md`。白底、有限品牌色、证据和信息关系驱动版式。
+- **自定义参考风格**：先查看用户参考图，提取六项共享规范：视觉主张、配色、字体、背景、素材、页面家具。不能只凭文件名猜风格。
 
-- Use OpenAI `gpt-image-2` as the default image generator.
-- Use MiniMax `image-01` when the user selects MiniMax.
-- Set MiniMax `image_generation.region` to `cn` for credentials issued by the
-  China platform and `global` for international credentials.
-- Use Kimi Vision for image understanding and QA. Do not present Kimi as an image-generation provider unless its official API adds that capability.
-- Never call a paid API before confirming the provider, final slide count, and quality setting with the user.
+每种风格均执行相同的整页生成、3 页确认和全稿流程。风格仅改变视觉规范，不改变生成方式。
 
-Read `references/provider-contract.md` before configuring or calling a provider.
+## 事实与叙事
 
-On macOS, read provider credentials from Keychain when the corresponding environment variable is absent. Never write API keys into plans, prompts, logs, or skill files.
+完整读取材料，建立 `facts.md`：核心结论、原始数字及单位/口径、术语、人名、版本、标准编号、时间、来源。数字冲突先问用户，不自行挑选。测算或预估明确标注，不编造缺失指标。保护原图和人物，不生成伪造的界面或证据。
 
-## Required Inputs
+管理层叙事读取 `references/executive-storyline.md`，沿用核心判断、受众问题、单页边界和页间衔接规则；其中任何原生文字或模板制作建议不得覆盖本合同。每页一个结论、2–4 条依据、一个主视觉。原稿放不下就拆页，不删关键信息或缩小成无法阅读的小字。路线图仅在材料或用户要求时出现。
 
-Infer these from the request and source outline. Ask only for material choices that are missing:
+先给出逐页大纲：结论标题、要点、版式。确认总页数和重要事实；页数以完整叙事为准，不为了模板凑数。已获授权的范围内直接推进，不重复索取授权。若另行调用付费服务，先核对已有授权是否覆盖具体服务与费用；不能通过换成其他图像模型绕开 ImageGen 要求。
 
-- Deck title and audience.
-- Source outline or loose text.
-- Desired number of content slides or target duration.
-- Palette: `primary`, `secondary`, `accent`, `background`, `text`, and optional `muted`; default `background` to solid `#FFFFFF`.
-- Image provider: `openai` or `minimax`.
-- Whether Kimi visual QA is required.
-- Whether the palette should recolor template pages. Default: yes.
-- Real metrics, screenshots, photos, logos, or claims that must remain exact.
-- Language policy. Default to Traditional Chinese prose while preserving source-approved English terms such as `AI`, `KPI`, `FDE`, and `SCADA`.
+## 计划与生成
 
-If the user provides only a color name, derive a balanced six-color palette,
-keep `background` at `#FFFFFF`, and record the exact hex values in the plan.
+读取 `references/deck-plan-schema.md`，以 `manifest.example.json` 为字段参考。所有页面（包括封面、目录、章节和结尾）都列入 `sections[].slides`，不允许组装器额外插入原生模板页。
 
-## Calibrated Management-Deck Defaults
+新计划必须设置：
+- `workflow.contract=imagegen_full_deck_v1`；记录用户风格选择及真实确认依据。
+- `image_generation.composition_mode=direct_imagegen_slide`、`local_text_overlay=false`、`max_image_area_ratio=1.0`。
+- `typography.prefer_editable_text=false`；每页 `title_render_mode=image`、`image_area_ratio=1.0`，不设置 `editable_text`。
+- `include_cover/include_catalogue/include_closing=false`（这些页面已在 slides 中）。
+- 所有可见文字含标题逐字列入 `exact_text`；源数字不改写。`prompt` 用 KEY CONTENT / VISUAL / LAYOUT / 可选 TYPE ACCENT 表达。
 
-Apply these defaults when the audience is a group executive team or another
-mostly non-IT decision-making audience. They capture the quality bar established
-through recent water-utility executive-deck work and should be treated as
-planning and QA requirements, not optional style suggestions.
+整页图以 16:9 生成，尽可能采用 2048×1152 或更高分辨率；如实际工具尺寸不同，记录真实尺寸并检查可读性，不能伪称达到目标。正文等效 ≥20pt，标题等效 ≥28pt，图注等效 ≥18pt；位图没有可审计的原生字号，以渲染可读性实检，不宣称通过原生字体检查。
 
-- **Visual posture:** Use a restrained, industry-appropriate technology
-  language: solid white canvas by default, a clear brand hierarchy, controlled
-  accents, crisp lines, quiet object-level shading, and high-contrast
-  typography. The result should feel mature, professional, and suitable for a
-  group-level report. Avoid cyberpunk, marketing-hero, decorative-card,
-  scenic-background, or one-note gradient treatments. Restrained does not mean
-  sterile: do not reduce the page to text, thin rules, and empty space.
-- **Main-point visibility:** The page title and the largest text block must
-  carry the page's conclusion or decision point. Do not demote the reason for
-  change, the industry-specific judgment, or the intended management outcome to
-  tiny annotations. An annotation may explain a point; it may not replace the
-  point. Write “提前36小時識別風險，減少被動處置”, not “專案成效”.
-- **Typography and editability:** Use PowerPoint-native text for titles, body
-  copy, KPI values, labels, captions, and source notes by default. The hard
-  floor is `18pt`; regular body copy, labels that carry the argument, and KPI
-  explanations should normally be `20pt` or larger. Use `28pt` or larger for
-  content titles. Reserve `18pt` for true captions, short labels, and source
-  notes. If copy does not fit, shorten it, restructure the layout, or split the
-  page; never solve overflow by shrinking below these floors.
-- **Text-to-visual balance:** For substantive content pages, visible text should
-  normally occupy about 30%-45% of the usable content area, with 30% as the
-  minimum target for an argument page. Use the remaining area for one dominant
-  diagram, comparison, process, matrix, or evidence structure. Treat this as a
-  readability guardrail rather than a pixel-perfect quota; a cover, chapter
-  divider, or architecture page may differ. Compared with a sparse AI-generated
-  draft, enrich the visible content by roughly 10%-20%, but do not fill the page
-  with paragraphs or tiny labels.
-- **Readable evidence:** A substantive page should usually contain one
-  conclusion-led title, 2-4 short supporting statements or evidence points, and
-  one visual system that explains their relationship. Do not put the whole
-  source outline in speaker notes. Put only the spoken expansion, caveats, and
-  examples in notes. If the argument still depends heavily on narration after
-  this balance, split the page.
-- **Editorial authorship:** Preserve the solid, quiet canvas, but do not make
-  every page a polished infographic. Prefer source screenshots, original
-  charts, plain tables, annotated evidence, and native diagrams before generic
-  illustration. Keep non-text raster illustration, photo, screenshot, or other image expression at
-  or below 30% of the usable content area. A framework, process, narrative
-  concept, chart, or evidence system may occupy more only when it is built as
-  editable native PowerPoint shapes, charts, connectors, and text. Icons,
-  cards, hubs, arrows, or illustrations are not forbidden; reject them when
-  they are generic, dominant, or mechanically repeated.
-- **Semantic load:** For every non-typographic page, declare one `semantic_visual_anchor` that carries meaning beyond text arrangement. A data pattern, source object, domain silhouette, framework, process, spatial system, or concept visual qualifies; boxes, thin rules, arrows, and empty containers alone do not. Narration may add context, but the title plus visual must already communicate the conclusion and relationship.
-- **Result evidence:** On KPI and outcome pages, foreground source-backed baseline, target, actual result, and time period. Preserve units and dates; record missing values as gaps instead of inventing them.
-- **Copy rhythm:** Vary title forms across facts, observations, decisions,
-  questions, and concise topic labels. Treat contrast formulas such as
-  “不是……而是……”, “从……到……”, and “先……再……” as occasional devices, not the
-  default voice. Preserve a formulaic title only when its contrast is genuinely
-  the argument or the user supplied it.
-- **Non-IT translation:** Lead with business effect, operating change,
-  management value, and replication conditions. Move implementation details
-  behind the business judgment. When a technical term is necessary, add a
-  short plain-language gloss at first use. Do not let framework names, model
-  names, data pipelines, or platform layers become the page's headline unless
-  the audience explicitly asks for them.
-- **Domain specificity:** Do not use generic “AI can improve efficiency” copy.
-  Show what is specific to the subject, audience, and operating context. When
-  the source raises a comparison with another sector, make the comparison a
-  visible, evidence-backed argument rather than leaving it as an implied
-  background assumption.
-- **Pagination:** Estimate pages from information density and narrative
-  completeness instead of forcing every deck into an arbitrary count. If the
-  template catalogue cannot express the required chapter or content structure,
-  use a blank/custom deck or an editable directory rather than deleting needed
-  content.
-- **Architecture and matrix pages:** Make the information hierarchy explicit.
-  Use topology, connectors, labels, and short descriptions to explain real
-  relationships. Do not let a diagram become a decorative collection of cards;
-  every meaningful node should have a clear business role when the page needs
-  that explanation.
-- **Scenario consistency:** When the user replaces a scenario, update every
-  related matrix, architecture, workflow, result, and replication page. Do not
-  leave stale labels from an earlier draft. Keep terminology synchronized across
-  all pages that describe the same scenario or workflow.
-- **Image quality and migration:** Generate content images at `2048x1152` or
-  higher when possible, keep 16:9, and inspect both the PNG and a rendered PPTX.
-  Reject blur, low-resolution Chinese, malformed characters, clipping,
-  overlap, unreadable small text, or a visual that feels like a background with
-  text pasted on top. When template integration reduces clarity, provide a
-  clean blank-deck version with the same page order and chapter structure so
-  the user can migrate pages without accepting degraded assets.
+生成提示词必须包含共享视觉规范、单页结论、逐字文字、信息拓扑、素材引用及内容边界。字体、布局、图表和背景都交给 ImageGen 完整设计，不要求“text-free canvas”。用户素材需查看后传给实际参考图接口，不能用文件名代替图像。Logo 未提供时仅生成中性占位，禁止臆造企业图徽。
 
-## Output Contract
+## 两阶段执行
 
-Deliver:
+1. 风格已选择、大纲事实可用后，保存 `preview.slide_ids` 为前 min(3, 总页数) 页，`preview.status=pending`。
+2. 仅对这些页面调用 ImageGen，保存原图并记录来源。自行查看全尺寸图，检查文字、数字、图表、人物和素材保真，再向用户展示。可以输出仅包含这些页的预览 PPTX；必须标明“确认稿”。
+3. 等待用户明确确认。把真实确认语句记入 `preview.approval_evidence`，再设为 `approved`；不得自动填入“已确认”。等待、工具成功或代理自检均不构成用户确认。
+4. 按锁定规范生成其余页。保持前三页原图不变，除非用户要求修改。每次图像调用后查看结果，仅修复失败页。
+5. 形成完整联系表和逐页 QA。中文错字先报告，只重生成受影响页；同一生僻字最多重试 2 次，仍失败则列入人工修正清单。不能默认用文本覆盖来绕过整页生成要求。
 
-- `deck-plan.json` containing the resolved outline, palette, provider settings, and per-slide prompts.
-- A storyline walkthrough showing the central thesis, decision request, story arc,
-  and page-to-page logic before paid generation.
-- One generated PNG per content slide.
-- `contact-sheet.png` showing all content slides in order for deck-level review.
-- A static style-audit JSON covering title formulas, copy density, repeated
-  layout families, declared source material, image-area ratio, editable-text
-  coverage, font floors, graphic balance, and common AI-default devices.
-- `image-qa.json` when Kimi QA is enabled.
-- Final `.pptx`.
-- Slide inventory JSON generated by the assembler.
-- `pptx-audit.json` proving editable-copy coverage and font floors in the
-  assembled file.
+旧 `generate_images.py` 为历史外部 provider 流程，新任务不用它生成图片。不得提前批量生成剩余页再伪装成等待确认。
 
-## Workflow
-
-1. Lock the executive narrative.
-   - Read `references/executive-storyline.md` for management, executive,
-     proposal, strategy, steering-committee, or major-project decks.
-   - Identify audience, decision goal, evidence, constraints, and missing facts.
-   - Write one `core_thesis`: the central judgment the audience should remember.
-     Treat it as a deck-level planning compass, not automatic visible copy for
-     every page.
-   - Write one `decision_request`: the decision, approval, alignment, or next
-     action expected from the audience.
-   - Define 1-3 `audience_priority` items and a 3-6 move `story_arc` that leads
-     causally to the decision request.
-   - If two plausible theses would materially change the deck, ask one focused
-     question before fixing the slide count or generating images.
-   - Do not preserve the source outline order when it weakens the argument.
-     Merge repetition, move technical detail behind the business judgment, and
-     keep appendices outside the main decision path.
-
-2. Build the storyboard.
-   - Split the material into at most four chapters when the template catalogue is included.
-   - Give each content slide one `audience_question`, one conclusion-led `message`, one explicit transition into the next page, and one dominant `visual_focus`. Write content titles as conclusions; reserve topic labels for cover and chapter pages, and keep titles native/editable by default.
-   - Define the slide's `narrative_role`, `thesis_expression`,
-     `content_boundary`, and `thesis_connection`. Separate the deck-level
-     north star from the page-level claim: a diagnosis page must diagnose, an
-     evidence page must prove, and a solution page may reveal the answer.
-   - Default `thesis_expression` to `implicit`. The deck thesis may guide visual
-     grammar, emphasis, sequencing, and a subtle visual anchor, but it must not
-     appear as page copy or as a literal solution object unless the source and
-     the page's narrative role explicitly reveal it.
-   - Treat visuals as claims. An AI platform, target architecture, product,
-     outcome, or future-state scene shown on a problem page is premature
-     solution leakage even if it is not labeled in text.
-   - Infer the information topology before choosing a layout. Distinguish
-     shared-center relationships, causal chains, sequences, hierarchies,
-     comparisons, matrices, networks, spatial systems, and evidence boards.
-   - Do not copy the source format mechanically. A source table may become a
-     hub-and-spoke diagram when its rows are dimensions of one central issue; a
-     bullet list may become a flow, layer model, or causal chain when the items
-     are related.
-   - Classify each claim as `fact`, `inference`, `proposal`, or `decision`; do
-     not present an inference or proposal as established fact.
-   - Use the `because / but / therefore` test. Each page needs evidence, a
-     remaining tension, or a reason the next page must follow.
-   - Alternate title forms intentionally. Read all titles as a sequence and
-     rewrite repeated “不是……而是……”, “从……到……”, “先……再……” structures unless
-     the contrast is source-backed and necessary.
-   - Choose the visual source before choosing decorative elements. Record real
-     screenshots, photos, charts, tables, or documents that can carry the page;
-     do not replace source evidence with a synthetic dashboard or illustration.
-   - Add concise `speaker_notes` when the spoken explanation matters; do not
-     force the full narrative into generated image text.
-   - Never invent metrics, customer names, dates, or evidence.
-   - Keep the tone restrained and evidence-based. Avoid inflated slogans,
-     winner/loser framing, or self-congratulatory claims such as "不是追赶者，
-     而是定义者" unless the user explicitly provides that wording and asks to
-     retain it. Prefer concrete phrasing such as "具备先发探索价值",
-     "可形成集团级复制路径", or "有机会沉淀为方法论".
-
-3. Create `deck-plan.json`.
-   - Follow `references/deck-plan-schema.md`.
-   - For new plans, declare `authorship` and `typography`, plus each slide's `visual_source`,
-     `source_asset_refs`, `layout_family`, `material_form`,
-     `semantic_visual_anchor`, `graphic_role`, `graphic_area_ratio`,
-     `image_area_ratio`, `editable_text`, and `graphic_devices`. These fields
-     improve static and visual QA; older plans remain valid without them.
-   - For new plans, set `typography.prefer_editable_text=true`,
-     `minimum_font_size_pt=18`, `body_font_size_pt=20`,
-     `title_font_size_pt>=28`, and `caption_font_size_pt=18`. Set
-     `image_generation.max_image_area_ratio=0.30`. Use `image_area_ratio` for
-     the non-text raster or generated-image-expression region; do not confuse it with
-     `graphic_area_ratio`, which may include editable native diagrams and charts.
-   - Set `language.primary=zh-Hant` for Traditional Chinese output and list
-     protected English terms in `language.preserve_terms`.
-   - For new plans, default content slides to `title_render_mode=native`.
-     Generated images must reserve a clean title zone without rendering a
-     title, title placeholder, or pseudo-text. The assembler adds the real
-     title as editable PowerPoint text. Use `image` only when the user explicitly
-     needs the title integrated into the bitmap; use `none` for an intentional
-     untitled page. Older plans without `authorship` keep image-rendered titles
-     for compatibility.
-   - For `source_evidence` or `mixed` pages, inspect the actual source assets and
-     use an asset-aware ImageGen edit/reference call or a native/local composer.
-     Do not pass only the asset filename to a text-only generation call and let
-     the model reconstruct a synthetic screenshot, chart, photo, or document.
-   - Choose a page role for every content slide: `opener`, `overview`, `metrics`, `process`, `system`, `comparison`, `roadmap`, or `custom`.
-   - Default to `composition_mode=designed_canvas` with
-     `local_text_overlay=true`. Ask ImageGen for a text-free 16:9 canvas whose
-     non-editable visual expression occupies no more than 30%; add the title,
-     body copy, KPI values, labels, captions, and source notes as native
-     PowerPoint text from `slide.editable_text`. Build diagrams, charts, tables,
-     and connectors natively whenever the information must remain editable.
-   - Use `direct_imagegen_slide` only when the user explicitly accepts
-     non-editable slide text and asks for the whole page to be rendered as one
-     integrated bitmap. Set `typography.prefer_editable_text=false` in that
-     exceptional route. It is incompatible with the default editable-text
-     contract and should not be selected merely because ImageGen participates
-     in the design.
-   - In `direct_imagegen_slide`, plan each page as a complete visual argument:
-     a main thesis, a visual structure that embodies that thesis, and a small
-     number of supporting proof points. Use a pure solid-color canvas, white by
-     default. Build meaning with layout, typography, relationships, diagrams,
-     and evidence instead of scenic backgrounds or decorative texture.
-   - Keep one dominant visual system or focus region per page. It may contain a
-     center node, connected satellites, arrows, layers, or a controlled set of
-     shapes when those elements encode real relationships. Background, scenery,
-     and ornament must remain subordinate to the conclusion.
-   - Make `exact_text` the exclusive visible-copy contract. When
-     `prefer_editable_text=true`, every item must map exactly to one
-     `editable_text[].text` item and must not be drawn by the image model. In
-     explicit bitmap mode, it becomes the image-rendered-copy contract. Do not
-     duplicate a `native` title in `exact_text`, and do not promote
-     `storyline.core_thesis`, `decision_request`, `transition`, speaker notes,
-     or prompt instructions into visible text unless those words are also
-     intentionally included in `exact_text`.
-   - Allow graphical richness that improves comprehension or completes the
-     composition: connectors, nodes, containers, icons, domain silhouettes,
-     compact illustrations, paths, and restrained color blocks. Use
-     `graphic_role=accent` by default with about 15%-30% graphic area. Keep
-     `image_area_ratio<=0.30` for every new page. Use
-     `explanatory` or `evidence` when a framework, process, narrative concept,
-     chart, screenshot, or source object is the information-bearing centerpiece;
-     if it needs more than 30% of the page, construct it with editable native
-     elements rather than expanding the bitmap region.
-   - Add `result_evidence` to metrics pages with `baseline`, `target`, `actual`,
-     and `time_period`; make supplied values visible in the title or `exact_text`.
-   - Keep adjacent pages visually related when they explain the same system,
-     but change composition when the reasoning changes.
-   - Set `image_generation.local_text_overlay=true` for the default editable
-     route and set `source_directory` to a separate folder when provider output
-     and final slide canvases differ. Do not use the legacy raster text
-     compositors when `typography.prefer_editable_text=true`; the assembler
-     creates the native PowerPoint text directly from `slide.editable_text`.
-   - When the user asks ImageGen to participate in the PPT design itself rather
-     than provide illustrations, set `image_generation.composition_mode` to
-     `designed_canvas`. Prompt the image model to create pure-white,
-     text-free information-graphic canvases with title zones, blank content
-     regions, restrained diagrams, flows, and visual hierarchy; the assembler
-     then overlays exact Chinese text as native editable PowerPoint objects.
-   - When the user wants a high-design deck rather than content-dense pages,
-     and has not asked for direct Codex image generation, set
-     `image_generation.composition_mode` to `ui_designer`. Use GPT Image to
-     generate restrained text-free information structures on a white solid
-     canvas: comparisons, flows, KPI bands, architecture layers, and process
-     paths. Then use
-     `scripts/compose_ui_designer_slides.py` only for legacy raster-copy plans.
-     For new editable plans, keep the generated canvas text-free and let
-     `assemble_deck.py` add concise Chinese labels, decisions, and key metrics. In this
-     mode, keep the information structure visually dominant: do not add
-     full-width opaque headers, large text panels, dense card stacks, or
-     immersive background art. Do not preserve every outline sentence as
-     visible bullet text in this mode.
-   - Without editable text, reduce image-rendered copy to concise labels
-     and proof points. Keep the title native by default. Put long explanations
-     in speaker notes or a separate editable-text workflow.
-   - Write `exact_text` as an array so QA can compare expected strings.
-   - Use one output image path per slide.
-
-4. Review the full storyline before spending.
-   - Present the resolved `core_thesis`, `decision_request`, chapter arc, and a
-     compact slide sequence showing each page's message and
-     `transition.to_next`.
-   - Review the deck as a senior solution expert: check thesis alignment,
-     executive relevance, evidence gaps, redundancy, abstraction jumps,
-     chapter closure, final convergence on the decision request, and whether
-     the spoken bridges read naturally in sequence.
-   - Run `scripts/audit_deck_style.py` and resolve high-risk findings: repeated
-     title formulas, one dominant layout family, long runs of the same topology,
-     dense generated copy, weak evidence provenance, or excessive standard AI
-     devices. Use `--strict` when the plan's authorship policy is a release gate.
-   - Check reveal timing. Reject a page that states or depicts a later answer
-     before the story has earned it, or that substitutes the deck thesis for
-     the source-backed page content.
-   - Delete or merge any slide whose removal does not weaken the argument.
-   - Record the result in `storyline_review`. Keep `status` blocked until thesis
-     alignment, executive relevance, page flow, and visual consistency pass and
-     `open_issues` is empty.
-   - Do not proceed to paid generation until the storyboard passes this review.
-
-5. Lock the palette and prompts.
-   - Read `references/image-style-guide.md`.
-   - Inject the exact hex palette into every prompt.
-   - State the background, title color, card color, line color, and accent usage explicitly.
-   - Default `background` to `#FFFFFF`. Use a pure solid-color background with
-     no background photo, texture, pattern, glow, or decorative scene. Allow
-     restrained flat fills, subtle object-level shading, and connector lines
-     inside the information graphic when they clarify relationships. Use a
-     different solid brand color only when the user explicitly requests it.
-     Set `allow_nonwhite_background` to `true` only for that explicit exception.
-   - Keep a consistent visual language across the deck while adapting the subject to each slide.
-   - Keep company typography and margins stable, but vary the material form.
-     Permit a plain statement, source screenshot, native chart, annotated table,
-     reasoning diagram, or generated scene. Do not force all pages into an
-     icon-card or hub-and-spoke system.
-   - Judge the whole page before individual devices. Require beauty, simplicity,
-     immediate comprehension, and a reading path that supports executive
-     narration. Do not treat the absence of graphics as evidence of authorship.
-
-6. Validate before spending.
+## 组装与验收
 
 ```bash
 python3 scripts/validate_plan.py deck-plan.json
-python3 scripts/audit_deck_style.py deck-plan.json --output style-audit.json
-python3 scripts/generate_images.py deck-plan.json --dry-run
-```
-
-7. Confirm paid generation.
-   - Report provider, model, number of images, size, and quality.
-   - If Kimi deck-style QA is enabled, report one additional paid contact-sheet
-     review call.
-   - Wait for user confirmation.
-
-8. Generate images.
-
-For `composition_mode=direct_imagegen_slide`, use the built-in `image_gen`
-skill/tool instead of `scripts/generate_images.py`. Generate one slide at a time
-with a complete prompt containing:
-
-- use case: `productivity-visual` or `infographic-diagram`;
-- asset type: complete 16:9 executive PowerPoint slide image;
-- primary request: design the entire slide as one integrated executive report
-  page that is understandable without speaker narration;
-- slide narrative role, audience question, and page conclusion;
-- `thesis_expression`, `content_boundary`, and `thesis_connection`;
-- when `thesis_expression` is `implicit`, omit the deck thesis and decision
-  request from the image prompt and explicitly forbid their text or literal
-  depiction; use only the slide-specific content and permitted visual subtext;
-- when `thesis_expression` is `explicit`, include the deck thesis only when it
-  belongs to this page's source-backed argument and `exact_text` contract;
-- exact palette;
-- exact visible Chinese text, kept concise;
-- one dominant visual system on a pure white solid canvas;
-- information topology and the reason that topology matches the message;
-- integrated composition direction that binds text, scene, diagrams, KPI
-  figures, and visual hierarchy into one page;
-- declared visual source, source-asset references, layout family, and only the
-  graphical devices that the page actually needs;
-- `graphic_role` and `graphic_area_ratio`: keep accent graphics near 15%-30%;
-  keep the whole non-text raster/image-expression region within
-  `image_area_ratio<=0.30`. Information-bearing framework, process, concept,
-  chart, and evidence systems must remain compact in this bitmap route. If they
-  need more area, switch back to the editable route and render the larger
-  system as native PowerPoint elements;
-- `material_form`, `semantic_visual_anchor`, language policy, and any supplied
-  baseline, target, actual result, and time period;
-- the actual referenced source images when the page uses `source_evidence` or
-  `mixed`; if the generation route cannot attach them, preserve the evidence
-  region for native/local composition instead of fabricating a substitute;
-- page-specific composition: do not reuse one left-title/right-card layout
-  across the deck. Let each slide's message choose the form, such as two-column
-  comparison, deployment-gap bridge, structural bottleneck map, knowledge
-  foundation platform, agent matrix, command center dashboard, closed-loop
-  workflow, KPI evidence board, service model comparison, or rollout roadmap;
-- avoid list: no watermark, no logo, no pseudo text, no extra claims, no
-  marketing exaggeration, no gradient background, no background photo, no
-  texture, no pattern, no excessive glow, no scenic wallpaper, no disconnected
-  card collection when the content has relationships, no separate background +
-  overlay feel, no repeated generic line-icon filler, no automatic circular
-  badges, no repeated rounded-card grid, no glowing AI brain or chip, no fake
-  dashboard, and no automatic symmetric hub-and-spoke. These are repetition and
-  relevance checks, not an absolute ban on every card, icon, arrow, or hub.
-
-After each `image_gen` call, inspect the slide image directly. Reject malformed Chinese, invented slogans, awkward spacing, visual clutter, or a background-with-text-pasted-over-it composition. Also reject incomplete visuals, text-and-line dominance, missing promised semantic support, excessive sparsity, unreadable thumbnails, unapproved backgrounds, or abrupt style jumps. Reject high speaker dependency, topic-only titles, or label boxes and arrows without a source object, data pattern, business object, framework, process, spatial system, or concept visual carrying meaning. Reject metrics pages that hide supplied baseline, target, actual result, or time period, and reject solution leakage beyond `content_boundary`. Save accepted PNGs into the workspace output directory, then assemble them full-bleed into PPTX using the Presentation skill's `@oai/artifact-tool` workflow or the local assembler.
-
-For provider-script generation, run:
-
-```bash
-python3 scripts/generate_images.py deck-plan.json --confirm-paid-call
-```
-
-Use `--overwrite` only when intentionally regenerating existing slide images. Use `--limit 1` for a first-slide style calibration when the user requests it.
-
-9. Preserve exact text as editable PowerPoint objects.
-
-For new plans with `typography.prefer_editable_text=true`, do not call either
-local raster text compositor. Define every visible body item in
-`slide.editable_text`; `assemble_deck.py` adds those items as native text boxes.
-The following command is only for a legacy plan that deliberately rasterizes
-copy and sets `prefer_editable_text=false`:
-
-```bash
-python3 scripts/compose_slide_images.py deck-plan.json
-```
-
-10. Inspect and review.
-   - Reject malformed Chinese, missing exact terms, duplicated labels,
-     collisions, cropped content, unreadable small text, wrong palette, or wrong
-     business meaning. Reject any visible text below 18pt, regular text below
-     20pt, a new slide without editable exact copy, or non-text image
-     expression above 30%.
-   - Generate the ordered contact sheet:
-
-```bash
-python3 scripts/create_contact_sheet.py deck-plan.json
-```
-
-   - Review a contact sheet in order. Confirm each page has one dominant visual
-     system, its topology matches the content relationships, the background is
-     pure and quiet, and the deck has consistent visual grammar and pacing.
-   - Review from an executive speaker's perspective: each page should be
-     aesthetically complete, simple, glanceable, and easy to narrate. Reject a
-     deck that removes AI-looking components by becoming mostly text and rules.
-     Fail pages whose logic cannot be recovered from the conclusion title and
-     visual without unusually strong narration.
-   - Review whether the deck contains editorial rhythm and material specificity:
-     source evidence, plain typographic pauses, native data views, diagrams, and
-     generated visuals should appear because the argument needs them, not as a
-     fixed quota or repeated template.
-   - Run the zero-cost static audit again after titles and prompts are final:
-
-```bash
-python3 scripts/audit_deck_style.py deck-plan.json --output style-audit.json
-```
-
-   - Run local dimension checks for every image.
-   - If Kimi QA is enabled, run:
-
-```bash
-python3 scripts/qa_images.py deck-plan.json --reviewer kimi --confirm-paid-call
-```
-
-This call is also paid and requires confirmation. Use `--limit 1` for a
-canary review and `--resume` for the remaining slides without reviewing a
-passing slide twice. Add `--deck-style` to review the ordered contact sheet for
-repeated AI-default visual grammar and copy rhythm; that option makes one
-additional paid Kimi call. Regenerate only failed slides.
-
-11. Assemble.
-
-```bash
+python3 scripts/assemble_deck.py deck-plan.json --preview
+# 只有用户确认后，且全部页面已生成并自检，才运行：
 python3 scripts/assemble_deck.py deck-plan.json
-```
-
-The assembler preserves editable template structure, duplicates chapter
-dividers, inserts full-bleed content PNGs, adds editable native content titles
-and `slide.editable_text` by default for new plans, optionally recolors known
-template colors, and writes a slide inventory.
-
-12. Verify.
-   - Confirm slide count and order against `deck-plan.json`.
-   - Confirm every content slide contains exactly one full-bleed image.
-   - Run the assembled-file static audit and resolve every failure:
-
-```bash
 python3 scripts/audit_pptx.py deck-plan.json --output pptx-audit.json
 ```
 
-   - The audit must confirm native editable coverage of `exact_text`, an 18pt
-     hard floor, a 20pt regular-text floor, one native conclusion title when
-     declared, and one full-slide bitmap per content page.
-   - Render thumbnails when a renderer is available and inspect all slides.
-   - Read the titles and `transition.to_next` fields aloud in order; confirm the
-     explanation moves smoothly toward `decision_request`.
-   - Confirm the output PPTX embeds the latest generated images.
+组装仅将每张 ImageGen 整页图铺入一页 16:9 PPT，保持图像完整，不额外插入原生标题、正文、章节、Logo 文本框或模板结尾。图片文字不可逐字编辑，交付时如实说明。
 
-## Template Rules
+核对页面总数、顺序、每页单张全幅图、图像哈希与来源、前三页复用和确认记录。检查最终 PPT 渲染及联系表；脚本结构通过不等于中文和视觉通过。若渲染器不可用，明确说明。
 
-- Use `assets/parallel-digital-standard-template.pptx`.
-- Use template slide 1 as cover, slide 2 as catalogue, slide 3 as the reusable chapter divider, and slide 5 as closing.
-- Keep chapter-page text editable.
-- Use content visuals as replaceable full-slide images; keep content titles as
-  editable native text by default. Keep all argument-bearing copy, KPI values,
-  labels, captions, and source notes editable in new plans.
-- Set `apply_palette_to_template` to `false` only when original corporate branding must remain unchanged.
-- Do not alter the original template asset.
-
-Read `references/template-inventory.md` when changing template handling.
-
-## Failure Rules
-
-- Stop if a required API key is missing; name the required environment variable.
-- Stop if a slide image is missing, non-PNG, not close to 16:9, or below the configured minimum dimensions.
-- Stop if a new plan declares font sizes below 18pt, regular text below 20pt,
-  omits editable exact copy, or sets `image_area_ratio` above 0.30.
-- Stop if the catalogue is enabled with more than four chapters.
-- Do not silently switch providers.
-- Do not assemble images that failed QA.
-- Do not claim Kimi generated an image when it only reviewed one.
+交付：计划、事实清单、3 页确认稿、全套页面图、联系表、最终 PPTX、结构审计、人工核对清单。人工清单关注生僻字/人名、金额公式、标准编号、图表数字、原图与 Logo；不可编辑性不是缺陷或触发重新加文字层的理由。

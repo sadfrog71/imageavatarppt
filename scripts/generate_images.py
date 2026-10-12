@@ -346,6 +346,8 @@ def main() -> None:
     errors = validate_plan(plan)
     if errors:
         raise SystemExit("\n".join(f"ERROR: {error}" for error in errors))
+    if plan.get("workflow", {}).get("contract") == "imagegen_full_deck_v1":
+        raise SystemExit("Use built-in ImageGen: generate only preview pages until explicit user approval; this legacy provider script is disabled for the full-image workflow.")
     style_audit = audit_plan(plan)
 
     config = plan["image_generation"]

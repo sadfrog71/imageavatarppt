@@ -1,390 +1,82 @@
-# Deck Plan Schema
+# 整页 ImageGen 计划合同
 
-Use one JSON file as the source of truth for planning, generation, QA, and assembly.
+使用一个 `deck-plan.json` 管理事实、风格、页面、生成和确认状态。
+`manifest.example.json` 保留基础叙事字段供复用，示例事实不可用于真实汇报。
+示例的风格未选择，因此直接校验会报告未确认；这是刻意设置的安全默认值。
 
-## Top-Level Fields
+## 必需工作流字段
 
 ```json
 {
-  "output": "outputs/example.pptx",
-  "cover_title": "專案成果匯報",
-  "footer": "平行數字  交叉現實",
-  "audience": "管理層",
-  "objective": "形成專案決策共識",
-  "language": {
-    "primary": "zh-Hant",
-    "preserve_terms": ["AI", "KPI", "FDE", "SCADA"]
+  "workflow": {
+    "contract": "imagegen_full_deck_v1",
+    "style": {
+      "name": "港华风格",
+      "confirmed": true,
+      "selection_evidence": "填写用户真实选定风格的语句，不得代填假确认"
+    },
+    "preview": {
+      "slide_ids": ["p01", "p02", "p03"],
+      "status": "pending",
+      "approval_evidence": ""
+    }
   },
-  "storyline": {
-    "core_thesis": "統一知識與流程底座是智能體規模化複製的前提",
-    "decision_request": "確認一期建設範圍、責任人和評估口徑",
-    "audience_priority": [
-      "業務價值",
-      "落地可行性",
-      "投入與風險"
-    ],
-    "story_arc": [
-      {
-        "move": "判斷",
-        "question": "為什麼現在需要推進？",
-        "answer": "現有點狀能力難以形成可複製的業務閉環"
-      },
-      {
-        "move": "方案",
-        "question": "應該建設什麼？",
-        "answer": "先統一知識與流程底座，再分場景擴展智能體"
-      },
-      {
-        "move": "決策",
-        "question": "管理層今天要確認什麼？",
-        "answer": "一期範圍、責任人和評估口徑"
-      }
-    ]
-  },
-  "storyline_review": {
-    "status": "pass",
-    "thesis_alignment": "每頁都在證明、解釋或落實中心判斷",
-    "executive_relevance": "價值、可行性、風險與責任邊界足以支撐本次決策",
-    "flow": "相鄰頁面可用因為、但是或所以自然連接",
-    "visual_consistency": "白色底板、關係驅動構圖、統一視覺語法、主次清晰",
-    "open_issues": []
-  },
-  "include_cover": true,
-  "include_catalogue": true,
-  "include_closing": true,
-  "apply_palette_to_template": true,
-  "authorship": {
-    "mode": "editorial",
-    "static_audit": "strict",
-    "max_formulaic_title_ratio": 0.25,
-    "max_same_layout_ratio": 0.45,
-    "max_same_layout_run": 2,
-    "max_exact_text_items": 14,
-    "max_exact_text_characters": 220,
-    "max_standard_ai_device_ratio": 0.35,
-    "max_typography_first_ratio": 0.35,
-    "max_same_material_form_ratio": 0.55,
-    "require_conclusion_titles": true,
-    "require_semantic_visual_anchor": true,
-    "require_result_evidence_on_metrics": true,
-    "allowed_formulaic_titles": [],
-    "allowed_cliche_terms": []
-  },
-  "typography": {
-    "font_name": "Microsoft YaHei",
-    "minimum_font_size_pt": 18,
-    "body_font_size_pt": 20,
-    "title_font_size_pt": 28,
-    "caption_font_size_pt": 18,
-    "prefer_editable_text": true
-  },
-  "palette": {
-    "name": "青綠科技",
-    "primary": "#0B6E69",
-    "secondary": "#174A5B",
-    "accent": "#F2B134",
-    "background": "#FFFFFF",
-    "text": "#102A2E",
-    "muted": "#6B7F80"
-  },
+  "creative_brief": "受众、汇报目标、核心结论和素材边界",
+  "design_constraints": "已选定风格的共享视觉规范，三页确认后保持不变",
+  "include_cover": false,
+  "include_catalogue": false,
+  "include_closing": false,
+  "typography": {"prefer_editable_text": false},
   "image_generation": {
     "provider": "openai",
     "model": "gpt-image-2",
-    "size": "2048x1152",
-    "quality": "high",
-    "composition_mode": "designed_canvas",
-    "local_text_overlay": true,
-    "source_directory": "generated-backgrounds",
-    "background_mode": "solid",
-    "allow_nonwhite_background": false,
-    "max_accent_graphic_area_ratio": 0.30,
-    "max_image_area_ratio": 0.30,
-    "style": "clean executive technology presentation",
-    "negative_prompt": "no watermark, no logo, no duplicated text, no cropped text, no gradient background, no photo background, no texture, no pattern, no excessive glow, no scenic wallpaper, no disconnected card collection, no excessive ornament"
-  },
-  "vision_review": {
-    "enabled": true,
-    "provider": "kimi",
-    "model": "kimi-k3",
-    "output": "outputs/image-qa.json",
-    "require_pass": true,
-    "deck_style_review": false,
-    "contact_sheet": "outputs/contact-sheet.png"
-  },
-  "sections": []
+    "composition_mode": "direct_imagegen_slide",
+    "local_text_overlay": false,
+    "max_image_area_ratio": 1.0,
+    "background_mode": "solid"
+  }
 }
 ```
 
-## Section And Slide Fields
+此处是字段片段，不是完整计划。模型名记录真实运行值；调用内置 ImageGen 时不
+假设可控制工具未开放的模型/尺寸参数。禁止改用其他 provider 或无字底图工作流。
 
-```json
-{
-  "main_title": "應用成效（一）",
-  "subtitle": "營運風險識別由被動轉向提前預警",
-  "slides": [
-    {
-      "id": "s1-01",
-      "title": "提前36小時識別風險，減少被動處置",
-      "audience_question": "一期建設是否已產生可驗證的業務價值？",
-      "message": "風險識別提前量已超過既定目標",
-      "claim_type": "fact",
-      "narrative_role": "成效證據頁：證明一期建設已產生可驗證價值",
-      "thesis_expression": "implicit",
-      "content_boundary": "僅呈現使用者提供的風險識別證據；不展示後續平台方案、目標架構或決策請求",
-      "thesis_connection": "透過可量化證據增強建設主張的可信度，但不直接複述整套主旨",
-      "layout_type": "metrics",
-      "title_render_mode": "native",
-      "information_topology": "comparison",
-      "visual_source": "generated_visual",
-      "source_asset_refs": [
-        "source/risk-warning-metrics.xlsx"
-      ],
-      "layout_family": "evidence_comparison",
-      "material_form": "data_visual",
-      "graphic_role": "evidence",
-      "graphic_area_ratio": 0.25,
-      "image_area_ratio": 0.25,
-      "semantic_visual_anchor": "基線、目標與實際提前量的三段對比圖",
-      "graphic_devices": [
-        "compact text-free baseline-target-actual bar comparison",
-        "native editable source note"
-      ],
-      "exact_text": [
-        "基線：平均提前6小時",
-        "目標：提前24小時",
-        "實際：提前36小時",
-        "週期：2026年1—6月"
-      ],
-      "editable_text": [
-        {
-          "text": "基線：平均提前6小時",
-          "role": "metric",
-          "x": 0.08,
-          "y": 0.30,
-          "width": 0.38,
-          "height": 0.12,
-          "font_size_pt": 24,
-          "bold": true,
-          "color": "primary",
-          "alignment": "left",
-          "vertical_alignment": "middle"
-        },
-        {
-          "text": "目標：提前24小時",
-          "role": "metric",
-          "x": 0.08,
-          "y": 0.44,
-          "width": 0.38,
-          "height": 0.12,
-          "font_size_pt": 24,
-          "bold": true,
-          "color": "secondary",
-          "alignment": "left",
-          "vertical_alignment": "middle"
-        },
-        {
-          "text": "實際：提前36小時",
-          "role": "metric",
-          "x": 0.08,
-          "y": 0.58,
-          "width": 0.38,
-          "height": 0.12,
-          "font_size_pt": 28,
-          "bold": true,
-          "color": "accent",
-          "alignment": "left",
-          "vertical_alignment": "middle"
-        },
-        {
-          "text": "週期：2026年1—6月",
-          "role": "caption",
-          "x": 0.08,
-          "y": 0.73,
-          "width": 0.38,
-          "height": 0.08,
-          "font_size_pt": 18,
-          "bold": false,
-          "color": "muted",
-          "alignment": "left",
-          "vertical_alignment": "middle"
-        }
-      ],
-      "result_evidence": {
-        "baseline": "平均提前6小時",
-        "target": "提前24小時",
-        "actual": "提前36小時",
-        "time_period": "2026年1—6月",
-        "source_ref": "source/risk-warning-metrics.xlsx"
-      },
-      "facts": [
-        "只使用使用者提供且可核實的數據"
-      ],
-      "visual_subject": "SCADA風險預警與營運處置流程",
-      "visual_focus": "頁面中心的基線、目標與實際提前量對比",
-      "visual_reasoning": "三組同口徑數值需要在同一尺度直接比較，數據對比比中心輻射更適合",
-      "transition": {
-        "from_previous": "承接上一頁對一期建設目標的說明",
-        "to_next": "價值已得到驗證，下一頁回答如何把單點成果複製到更多場景"
-      },
-      "speaker_notes": "先講結論，再解釋口徑和數據來源，最後引出規模化複製問題。",
-      "prompt": "",
-      "image": "images/s1-01.png"
-    }
-  ]
-}
-```
+风格必须已由用户选定，`selection_evidence` 对应真实对话。`preview.slide_ids`
+严格等于完整页序的前三页；不足三页时填写所有页。默认 `pending`，代理自行
+看图通过不等于用户确认。用户明确认可后才填写 `approval_evidence` 并设为
+`approved`。更改风格或整套设计规范后重置确认状态。
 
-## Planning Rules
+## 页面字段
 
-- Write `storyline` before creating slide prompts. `core_thesis` must be one
-  specific judgment, not a generic topic. `decision_request` must name the
-  alignment, approval, or next action expected from the audience.
-- Keep `story_arc` to 3-6 causal moves. Each move must contain `move`,
-  `question`, and `answer`.
-- Complete `storyline_review` after reviewing the full storyboard as a senior
-  solution expert. Set `status` to `pass` only when thesis alignment, executive
-  relevance, page flow, and visual consistency have been checked and
-  `open_issues` is empty. Validation blocks image generation otherwise.
-- Keep `id` and `image` unique.
-- Use valid six-digit hex colors.
-- Use `authorship` to configure the zero-cost style audit. `static_audit=warn`
-  reports risks without blocking older plans; `static_audit=strict` turns any
-  style warning into a generation gate. Use `strict` for new plans and release
-  candidates; plans without `authorship` remain warning-only for compatibility.
-  Ratio thresholds must be between 0 and 1. Keep
-  `allowed_formulaic_titles` and `allowed_cliche_terms` narrow and source-
-  justified.
-- For new executive plans, set `language.primary=zh-Hant`. Write prose in
-  Traditional Chinese while preserving exact English abbreviations in
-  `language.preserve_terms`, including `AI`, `KPI`, `FDE`, and `SCADA` unless
-  the source requires another policy.
-- For new plans, set `typography.prefer_editable_text=true`. The hard minimum
-  is `minimum_font_size_pt=18`; regular body copy and argument-bearing labels
-  use `body_font_size_pt>=20`; content titles normally use
-  `title_font_size_pt>=28`; true captions and source notes may use
-  `caption_font_size_pt=18`. If text does not fit, shorten, restructure, or
-  split the page instead of shrinking below the floor.
-- Set `image_generation.max_accent_graphic_area_ratio` to a value greater than
-  0 and no greater than 0.30. The default is 0.30.
-- Set `image_generation.max_image_area_ratio` to a value greater than 0 and no
-  greater than 0.30. Every new slide must declare `image_area_ratio` at or below
-  that value. This measures non-text raster illustration, photo, screenshot, or generated-image
-  expression, not native PowerPoint shapes, charts, connectors, or text.
-- Keep `exact_text` concise and designed for the page. Short labels should
-  normally be under 18 Chinese characters, but thesis lines, KPI captions, and
-  evidence points may be longer when they are necessary for the slide to carry
-  the source argument. Avoid long paragraphs; split pages or use speaker notes
-  when the visible text would become dense.
-- Put real quantitative claims in `facts`; do not synthesize unsupported values.
-- Use `claim_type` to distinguish `fact`, `inference`, `proposal`, and
-  `decision`. Do not write an inference or proposal as a fact.
-- Write `narrative_role` in natural language to state what the page does in the
-  argument. Do not use it as another rigid layout enum.
-- Set `thesis_expression` to `implicit` by default. Use `explicit` only when the
-  page intentionally reveals the deck thesis and that claim belongs to the
-  page's source-backed argument.
-- Write `content_boundary` as a semantic fence covering both copy and imagery:
-  what the page may show and what later solution, future-state, outcome, or
-  decision content must remain deferred.
-- Write `thesis_connection` to explain how the page advances the deck thesis
-  through evidence, tension, continuity, or transition. Thesis alignment does
-  not require repeating or literally illustrating the thesis.
-- Make `audience_question` the question the page answers and `message` the
-  conclusion. Except for cover, chapter, and closing pages, write the `title`
-  as the conclusion itself. Prefer “提前36小時識別風險，減少被動處置” over a
-  topic label such as “專案成效” or “平台架構”.
-- Read all titles as one sequence. Keep contrast formulas such as
-  “不是……而是……”, “从……到……”, and “先……再……” below the configured ratio unless
-  the source argument genuinely depends on that contrast. Mix fact-led,
-  observation-led, decision-led, question, and concise topic titles.
-- Define one `visual_focus` per page. It should describe the first object,
-  relationship, or visual system the audience sees. It may contain multiple
-  connected elements when the relationship itself is the message.
-- Write `information_topology` as a concise structural description such as
-  `hub_spoke`, `causal_chain`, `flow`, `layers`, `comparison`, `evidence_board`,
-  `network`, `spatial_system`, or another topology justified by the content.
-  Treat these as guidance, not a closed template list.
-- Write `visual_reasoning` to explain why the selected topology expresses the
-  slide's conclusion better than a table, bullet list, or unrelated cards. Do
-  not mechanically preserve the source format.
-- For new plans, set `visual_source` to `source_evidence`, `native_chart`,
-  `native_diagram`, `generated_visual`, or `mixed`. Record traceable screenshots,
-  documents, tables, charts, photos, or identifiers in `source_asset_refs`.
-  Give each page a concise `layout_family` so the static audit can detect deck-
-  level repetition. Set `graphic_role` to `accent`, `explanatory`, `evidence`,
-  or intentional `none`, and estimate `graphic_area_ratio` from 0 to 1. Default
-  conceptual pages to `accent` at roughly 0.15-0.30. Frameworks, processes,
-  narrative concepts, charts, screenshots, and source objects may use
-  `explanatory` or `evidence`; if the system needs to exceed 0.30, build the
-  larger portion as editable native PowerPoint elements while keeping
-  `image_area_ratio<=0.30`.
-  Declare `material_form` as `typography`, `source_evidence`, `data_visual`,
-  `diagram`, `illustration`, `table`, or `mixed`. For every non-typographic
-  graphic role, write one `semantic_visual_anchor`: the non-text object, data
-  pattern, framework, process, spatial system, or concept visual that carries
-  at least one layer of meaning. “Three columns”, “large text”, “arrows”, and
-  empty boxes are layout instructions, not semantic anchors.
-  Use `graphic_devices` as an allow-list; individual icons, cards, hubs, arrows,
-  or illustrations are acceptable when relevant, but do not repeat them as a
-  generic deck-wide visual system.
-- Write `transition.from_previous` and `transition.to_next` for every content
-  slide. Read them in sequence before generation; adjacent pages must connect
-  causally rather than only share a topic.
-- Put explanations needed for delivery in `speaker_notes`; keep generated image
-  text concise. The title plus the visual should communicate the main conclusion
-  and relationship without depending on an unusually skilled speaker.
-- On metrics and outcome pages, add `result_evidence` with `baseline`, `target`,
-  `actual`, and `time_period`; use `null` only to record a genuine source gap.
-  Put supplied values in the title or `exact_text`, keep units and dates exact,
-  and record `source_ref`. Never invent a missing baseline or result.
-- Treat `exact_text` as the exclusive visible-copy contract. When
-  `typography.prefer_editable_text=true`, every item must appear exactly once in
-  `slide.editable_text`, and the image prompt must render no text. Each editable
-  item declares normalized `x`, `y`, `width`, `height`, `font_size_pt`, `role`,
-  `bold`, `color`, `alignment`, and `vertical_alignment`. Do not render
-  `core_thesis`, `decision_request`, planning field names, transitions, or
-  speaker notes unless the intended words are also present in `exact_text`.
-- New plans default to `title_render_mode=native`: do not include the title in
-  `exact_text`, reserve a clean title zone in the bitmap, and let the assembler
-  add the title as editable PowerPoint text. Set `title_render_mode=image` only
-  when the title must be part of the integrated bitmap, and then include the
-  complete title in `exact_text`. Use `none` only for an intentional untitled
-  page. Plans created before the `authorship` contract retain image-title
-  behavior for compatibility.
-- For `thesis_expression = implicit`, omit the deck thesis and decision request
-  from the image prompt. Reject literal depictions of deferred solutions even
-  when they contain no text; visual objects also make claims.
-- Default `palette.background` to `#FFFFFF`. Use a pure solid-color canvas with
-  no background photo, texture, pattern, glow, or scenic wallpaper unless the
-  user explicitly requests a different background treatment. Allow restrained
-  shapes, connectors, flat tints, and subtle object-level shading when they
-  encode relationships. Set
-  `image_generation.allow_nonwhite_background` to `true` only for that explicit
-  exception.
-- Leave `prompt` empty only when `generate_images.py` should compose it from the structured fields.
-- Keep at most four sections when `include_catalogue` is true.
-- Use PNG output paths.
-- Default new editable plans to `image_generation.composition_mode =
-  "designed_canvas"` with `local_text_overlay=true`. The generated canvas is
-  text-free and the assembler adds `slide.editable_text` as native PowerPoint
-  text; do not run the legacy raster text compositors.
-- Use `image_generation.composition_mode = "direct_imagegen_slide"` only when
-  the user explicitly accepts non-editable text and Codex
-  should call built-in `image_gen` to design each whole slide as one integrated
-  page. Set `typography.prefer_editable_text=false`. In that mode, do not set `local_text_overlay` and do not ask the
-  provider to create a text-free background. The prompt must bind Chinese text,
-  diagrams, KPI figures, scene, and information hierarchy into one visual
-  argument, and should avoid repeated template-like compositions across the
-  deck.
-- Before paid generation, run `scripts/audit_deck_style.py`. Resolve high-risk
-  formulaic copy, dense generated text, dominant layout families, long repeated
-  runs, topic-only titles, overused typography-first or single material forms,
-  undeclared evidence sources, missing semantic anchors, incomplete result
-  evidence, excessive planned graphics, and common AI-default visual devices.
-- Set `vision_review.deck_style_review=true` only after confirming one
-  additional paid Kimi call. The review uses the ordered contact sheet to judge
-  repeated layouts, generic visual grammar, material specificity, copy rhythm,
-  and editorial authorship across the deck.
-- Avoid exaggerated, promotional conclusions in `exact_text` and prompts. Do
-  not invent lines such as "不是追赶者，而是定义者"; use restrained claims tied to
-  the source outline.
+保留现有 `sections` 数组，每项包含 `main_title`、`subtitle`、`slides`。
+章节只是规划分组，不会自动插入分隔页。需要封面、目录、章节页或结尾时，显式
+作为一张 slide 规划并交给 ImageGen 生成。
+
+每页保留 id/title/message/claim_type/layout_type/image/exact_text 等基础字段，
+以及受众问题、叙事角色、信息关系、素材来源、视觉焦点与前后衔接。完整字段可
+参考示例；不要无故删除事实、来源和叙事记录。
+
+- `title_render_mode`: 固定 `image`。
+- `exact_text`: 包含标题在内的全部可见原文；测算值、单位、时间和来源图注完整。
+- `image_area_ratio`: 固定 `1.0`，表示一张完整页面图；不再套用旧版 30% 限制。
+- `editable_text`: 不设置，不叠加原生文字。
+- `image`: 实际 ImageGen 产物的 PNG 路径，不能指向代码生成的示意图。
+- `prompt`: 共享设计规范 + KEY CONTENT / VISUAL / LAYOUT；要求文字与背景一起生成。
+- `source_asset_refs`: 用户实际素材，生成时通过工具真实引用，不只写入提示词。
+
+`background_mode` 可为 solid；港华风格可用 soft_gradient（极淡对角渐变）。
+非白底需 `allow_nonwhite_background=true`。规划颜色须与实际提示词一致。
+
+## 校验边界
+
+验证器检查模式、风格记录、前三页 ID、确认字段、禁止文字叠加和图片面积。
+组装器 `--preview` 只读取前三页，写出独立的 `*-preview.pptx`；全稿组装在
+pending 时拒绝运行。全稿只插入计划中的图片，不添加原生模板页。
+
+这些记录无法独立证明用户真的说过确认，代理必须依真实对话填写。脚本也不能
+证明 PNG 来源于哪种模型，须保留实际 ImageGen 工具产物与调用证据。未确认时
+禁止生成剩余页，这是生成阶段的代理义务，不能靠组装拦截来代替。
+
+结构审计检查单图页、页序和数量，不检验位图中文字的原生字号或可编辑性。
+中文字、数字和图片保真须看图验证。旧 schema 仅供历史项目兼容，新任务不得
+省略 workflow 来绕过这些要求。

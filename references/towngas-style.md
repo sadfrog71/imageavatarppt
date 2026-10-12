@@ -7,16 +7,16 @@
 案例、数字、人名、汇报对象、页数或叙事顺序。保留原技能的制作与审批流程，
 不要求 runSkill、generateSlides、slidesCompose 或其他平台专用工具。
 
-这是按需加载的视觉预设，不替换整个技能。未选择此模板时，沿用原默认设置。
-正文、数字、标题、图注继续使用原生可编辑文字；正文通常 ≥20pt，标题 ≥28pt，
-任何可见文字不低于 18pt。图片表达面积仍遵守原技能上限；较大的卡片、流程和
-图表用原生形状构建。只有用户另外明确要求整页图片时才进入原技能位图路径。
+这是按需加载的视觉预设，不改变其他风格的外观。所有风格共同遵守 SKILL.md 的
+ImageGen 整页生成合同：文字、数字、图表与背景一起生成；先选择风格，先出 3 页
+确认稿，用户确认后生成剩余页面。正文等效 ≥20pt、标题等效 ≥28pt、图注等效
+≥18pt。旧版原生可编辑文字和图片面积上限不适用。
 
 ## 固定设计规范
 
 将以下六行作为整份汇报的共享视觉约束，预览与后续页面保持一致。
-它们描述最终幻灯片；可编辑模式的图像生成请求仍须明确“无文字、预留文字区域”，
-文字和 Logo 占位由原生排版补入，不能要求模型照着字体规范生成正文。
+它们描述最终幻灯片；文字和背景均由 ImageGen 一起生成，不输出无字画布，
+不在后期叠加正文。Logo 占位也属于整页生成内容。
 
 ```text
 Visual Thesis: a calm executive-briefing deck, modular information cards on light blue ground, conclusion-first composition with one dominant focal point per page, crisp flat vector rendering with rounded cards and bold flow arrows.
@@ -24,7 +24,7 @@ Palette: background pale ice blue #EEF4FB; primary text deep navy #12366B; secon
 Typography System: Simplified Chinese by default; display titles in heavy, wide-set geometric sans with tight tracking and firm square stroke endings; key numbers oversized in accent blue; body in clean medium-weight humanist sans with generous line spacing; strict left alignment and consistent size steps.
 Background / Texture: edge-to-edge pale ice blue, optionally with a very soft diagonal gradient to white where supported; no noise or patterns.
 Media / Visual Treatment: original provided photos, screenshots, or illustrations inside rounded white-framed cards with soft shadows; flat vector diagrams with thick blue arrows that encode actual relationships; preserve source image content and never redraw faces or evidence.
-Graphic Devices / Page Furniture: a neutral editable Logo placeholder fixed at top-right; thin navy rule under titles; small rounded number chips; footer metadata line in slate small type; no invented emblem or company wordmark.
+Graphic Devices / Page Furniture: a neutral Logo placeholder fixed at top-right; thin navy rule under titles; small rounded number chips; footer metadata line in slate small type; no invented emblem or company wordmark.
 ```
 
 用户指定语言时替换语言默认值，并在生成前锁定。其余页面不得自行换色、换字体
@@ -49,9 +49,9 @@ Graphic Devices / Page Furniture: a neutral editable Logo placeholder fixed at t
 ## Logo 占位与素材
 
 - 每页右上角保留同尺寸、同位置的中性 Logo 区，避开标题和安全边距。
-- 默认用可编辑的 `Logo` 文本框及轻量占位框；不生成图徽、不写企业中英文名。
+- 默认由 ImageGen 绘制中性 `Logo` 字样及轻量占位框；不生成图徽、不写企业中英文名。
 - 不附带品牌链接或远程参考图，不搜索或下载品牌标志，不将标志交给模型重画。
-- 日后用户提供正式 Logo 且要求使用时，原图等比嵌入占位区，不拉伸、不改色。
+- 日后用户提供正式 Logo 且要求使用时，作为真实参考图交给 ImageGen，等比保留在占位区，不拉伸、不改色。
 - 用户照片、截图和插画以原图置入圆角白框卡片，不满铺、不重画人脸、不改变
   界面证据。必要裁切不能丢失关键信息；人物姓名保持原字并对应具体人物。
 
@@ -82,56 +82,30 @@ Graphic Devices / Page Furniture: a neutral editable Logo placeholder fixed at t
 - `KEY CONTENT`：结论式标题、2–4 条支撑，建议 300 字以内。数字、单位、术语、
   人名和标准编号来自原稿；测算或预估明确标注。300 字不是删证据的理由。
 - `VISUAL`：一个承载结论的图示或证据对象，说明素材位置、人物与姓名对应关系；
-  原图使用 `faithfully reproduce, do not redraw faces, not full-bleed`，实际组装仍
-  优先原图嵌入。指定“右上角预留中性 Logo 区，不生成品牌标志”。
+  原图使用 `faithfully reproduce, do not redraw faces, not full-bleed`，生成时必须
+  传入实际原图并核对保真。指定“右上角预留中性 Logo 区，不生成品牌标志”。
 - `LAYOUT`：以上版式名称、元素数量和阅读顺序。
 - `TYPE ACCENT`（可选）：仅说明重点页需要放大的标题或关键数字。
 
 事实矛盾先核实，不凭版式挑选一个数字；所有复用图片先看原图。
 
-## 与现有脚本的衔接
+## 计划与脚本衔接
 
-这是指导代理构建计划的模板，不是脚本自动识别的配置开关。把下列值写入现有
-`deck-plan.json` 字段，保持原 schema 和 assembler 合同：
+按 SKILL.md 与 deck-plan-schema.md 使用整页模式。设置语言 `zh-Hans`，palette：
+primary/text `#12366B`，secondary/muted `#5A6B85`，accent `#1E6FD9`，
+background `#EEF4FB`，`allow_nonwhite_background=true`。
 
-```json
-{
-  "language": {"primary": "zh-Hans"},
-  "palette": {
-    "name": "港华风格",
-    "primary": "#12366B",
-    "secondary": "#5A6B85",
-    "accent": "#1E6FD9",
-    "background": "#EEF4FB",
-    "text": "#12366B",
-    "muted": "#5A6B85"
-  },
-  "image_generation": {
-    "background_mode": "solid",
-    "allow_nonwhite_background": true
-  }
-}
-```
+ImageGen 整页路径支持本风格极淡对角渐变，使用 `background_mode=soft_gradient`；
+也可统一选 `solid`，在确认稿前锁定。不能把旧提示词中的 no gradient background
+与已经选定的极淡渐变同时发送；禁止纹理、装饰场景和抢眼渐变仍然有效。
 
-这是合并片段，不是完整可执行计划；保留现有 provider、typography、sections 等
-必要字段，以及来源保护词。现有验证脚本只支持 `solid`，因此默认采用浅冰蓝
-纯色底；不传入未经支持的 gradient 模式。仅使用支持渐变的原生排版路径时，才
-可添加极淡渐变，并如实检查最终呈现。
-
-构建本模板提示词时，移除与选定圆角卡片冲突的泛化禁令，保留“禁止无意义重复”
-和“箭头表达真实关系”。纯色路径继续保留 `no gradient background`；原生渐变
-不交给该生成路径。`no logo` 指禁止模型生成品牌，原生 Logo 占位另行添加。
-
-不要直接套用带其他品牌标志、企业页脚或“谢谢”结尾的旧模板。先检查模板母版、
-封面、目录和结尾；按原技能允许的 blank/custom 路径使用统一页面家具，或最小
-替换不兼容的元素。不得把旧品牌残留交付为本模板。
+不要混入旧模板的企业 Logo、页脚或原生封面/章节/结尾。全套页面都从 ImageGen
+整页图片组装；图片内文字和 Logo 占位不可单独编辑。
 
 ## 验证要点
 
-逐页检查结论、数字、原图、人名、Logo 占位、字号与越界；联系表检查布局节奏、
-色彩和页面家具一致性。圆角卡片是本模板允许的语言，不能仅因存在卡片就判失败；
-仍应处理重复构图、无信息装饰或主次不清，不为过检查关闭全局审计。
+逐页检查结论、数字、原图、人名、Logo 占位、可读性与越界；联系表检查布局节奏、
+色彩和页面家具一致性。卡片是本模板允许的语言，但避免机械重复。
 
-可编辑文字有错直接修改文本。显式整页位图路径出现生僻字错误时，不反复重生成
-超过 2 次；优先原生同字号覆盖修正，并列明人工核对项。此次安装模板不等于已完成
-实际演示文稿渲染验证；最终制作仍需查看图片及 PPT 渲染结果。
+同一生僻字最多重生成 2 次，仍有问题则列入人工核对清单，不自动用原生文本框
+覆盖。安装模板不等于完成真实演示文稿视觉验证；最终制作仍须查看图片和 PPT。
