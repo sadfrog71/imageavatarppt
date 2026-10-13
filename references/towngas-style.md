@@ -16,7 +16,7 @@ ImageGen 整页生成合同：文字、数字、图表与背景一起生成；�
 
 将以下六行作为整份汇报的共享视觉约束，预览与后续页面保持一致。
 它们描述最终幻灯片；文字和背景均由 ImageGen 一起生成，不输出无字画布，
-不在后期叠加正文。Logo 占位也属于整页生成内容。
+不在后期叠加正文。Logo 的处理须在生图前确认；选定素材作为真实参考图使用。
 
 ```text
 Visual Thesis: a calm executive-briefing deck, modular information cards on light blue ground, conclusion-first composition with one dominant focal point per page, crisp flat vector rendering with rounded cards and bold flow arrows.
@@ -24,7 +24,7 @@ Palette: background pale ice blue #EEF4FB; primary text deep navy #12366B; secon
 Typography System: Simplified Chinese by default; display titles in heavy, wide-set geometric sans with tight tracking and firm square stroke endings; key numbers oversized in accent blue; body in clean medium-weight humanist sans with generous line spacing; strict left alignment and consistent size steps.
 Background / Texture: edge-to-edge pale ice blue, optionally with a very soft diagonal gradient to white where supported; no noise or patterns.
 Media / Visual Treatment: original provided photos, screenshots, or illustrations inside rounded white-framed cards with soft shadows; flat vector diagrams with thick blue arrows that encode actual relationships; preserve source image content and never redraw faces or evidence.
-Graphic Devices / Page Furniture: a neutral Logo placeholder fixed at top-right; thin navy rule under titles; small rounded number chips; footer metadata line in slate small type; no invented emblem or company wordmark.
+Graphic Devices / Page Furniture: user-approved logo treatment at top-right (supplied asset, omission, or explicitly requested placeholder); thin navy rule under titles; small rounded number chips; footer metadata line in slate small type; no invented emblem or company wordmark.
 ```
 
 用户指定语言时替换语言默认值，并在生成前锁定。其余页面不得自行换色、换字体
@@ -46,12 +46,13 @@ Graphic Devices / Page Furniture: a neutral Logo placeholder fixed at top-right;
 窄字距挤压中文。主要文字左对齐；大数字允许按版式居中。保持统一边距、标题区、
 页脚和层级。禁止赛博、霓虹、3D、深色科技风、彩虹色、纹理与装饰背景。
 
-## Logo 占位与素材
+## Logo 确认与素材
 
-- 每页右上角保留同尺寸、同位置的中性 Logo 区，避开标题和安全边距。
-- 默认由 ImageGen 绘制中性 `Logo` 字样及轻量占位框；不生成图徽、不写企业中英文名。
-- 不附带品牌链接或远程参考图，不搜索或下载品牌标志，不将标志交给模型重画。
-- 日后用户提供正式 Logo 且要求使用时，作为真实参考图交给 ImageGen，等比保留在占位区，不拉伸、不改色。
+- 先执行 SKILL.md 的“Logo 确认与交付要求”：不明确时询问是否需要并请用户提供正式素材，不自动写“Logo”。
+- 首选真实透明底 PNG，建议宽度至少 1000px（或长边至少 1000px），保持原比例；也可提供 SVG/PDF 矢量源。白底或棋盘格截图不等于透明底。
+- 页面显示宽度建议占页宽 8%–12%，等比缩放，遵守品牌安全边距；在确认稿检查位置与大小。
+- 不放、留空位或显示占位字样按用户明确选择执行。不附带品牌链接、不搜索替代标志、不臆造企业字样。
+- 正式素材先查看，再作为真实参考图交给 ImageGen，要求保留字形、颜色与比例；看图检查失真，不承诺像素级复现。
 - 用户照片、截图和插画以原图置入圆角白框卡片，不满铺、不重画人脸、不改变
   界面证据。必要裁切不能丢失关键信息；人物姓名保持原字并对应具体人物。
 
@@ -83,7 +84,7 @@ Graphic Devices / Page Furniture: a neutral Logo placeholder fixed at top-right;
   人名和标准编号来自原稿；测算或预估明确标注。300 字不是删证据的理由。
 - `VISUAL`：一个承载结论的图示或证据对象，说明素材位置、人物与姓名对应关系；
   原图使用 `faithfully reproduce, do not redraw faces, not full-bleed`，生成时必须
-  传入实际原图并核对保真。指定“右上角预留中性 Logo 区，不生成品牌标志”。
+  传入实际原图并核对保真。写明用户已确认的 Logo 处理方式；未确认前不能生成。
 - `LAYOUT`：以上版式名称、元素数量和阅读顺序。
 - `TYPE ACCENT`（可选）：仅说明重点页需要放大的标题或关键数字。
 
